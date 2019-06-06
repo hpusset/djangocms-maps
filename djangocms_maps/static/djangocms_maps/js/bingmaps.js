@@ -51,7 +51,6 @@ djangocms.Maps = {
         var that = this;
         var container = instance;
         var data = container.data();
-
         var options = {
             credentials: data.api_key,
             navigationBarMode: Microsoft.Maps.NavigationBarMode.compact,
@@ -64,9 +63,7 @@ djangocms.Maps = {
             showMapTypeSelector: data.layers_control,
             showScalebar: data.scale_bar,
             styles: data.style,
-            center: new Microsoft.Maps.Location(46.94708, 7.445975) // default to switzerland;
         };
-
         var map = new Microsoft.Maps.Map(container[0], options);
 
         // latitute or longitute have precedence over the address when provided
@@ -88,13 +85,12 @@ djangocms.Maps = {
                     bounds: map.getBounds(),
                     where: data.address,
                     callback: function (answer, userData) {
-                        map.setView({ bounds: answer.results[0].bestView });
-                        that.addMarker(map, answer.results[0].location, data);
-
                         // use user-set zoom level for displaying result
-                        var options = map.getOptions();
-                        options.zoom = data.zoom;
+                        var options = Object.assign(map.getOptions(), {
+                            center: answer.results[0].location
+                        });
                         map.setView(options);
+                        that.addMarker(map, answer.results[0].location, data);
                     }
                 };
                 searchManager.geocode(requestOptions);
