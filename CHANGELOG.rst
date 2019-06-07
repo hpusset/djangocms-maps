@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.12.0 (2019-06-07)
+-------------------
+- Fix Bing Maps zoom
+- Remove map_title template
+- Use Bing Maps API to convert latitude and longitude
+
 0.11.0 (2019-05-08)
 -------------------
 
