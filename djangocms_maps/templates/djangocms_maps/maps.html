@@ -1,6 +1,8 @@
 {% load i18n %}{% get_current_language as LANGUAGE_CODE %}
 <div class="djangocms djangocms-maps plugin_maps">
-    {% include "djangocms_maps/maps_title.html" %}
+    {% if object.title %}
+        <h2>{{ object.title }}</h2>
+    {% endif %}
     <div class="djangocms-maps-container" id="djangocms-maps-{{ object.map_provider }}-{{ object.pk }}"
         data-id="{{ object.pk }}"
         data-title="{{ object.get_title }}"
@@ -16,8 +18,9 @@
         data-street_view_control="{{ object.street_view_control|lower }}"
         data-layers_control="{{ object.layers_control|lower }}"
         data-scale_bar="{{ object.scale_bar|lower }}"
-        data-lat="{% if object.lat %}{{ object.lat }}{% endif %}"
-        data-lng="{% if object.lng %}{{ object.lng }}{% endif %}"
+        {% if object.lat and object.lng %}
+            data-latlng="{{ object.lat }},{{ object.lng }}"
+        {% endif %}
         data-show_infowindow="{{ object.info_window|lower }}"
         data-style="{{ object.style }}"
         data-api_key="{{ api_key }}"

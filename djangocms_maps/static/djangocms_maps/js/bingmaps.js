@@ -15,67 +15,52 @@ var djangocms = window.djangocms || {};
  * @class Maps
  * @namespace djangocms
  */
-
 djangocms.Maps = {
 
-    options: {
-        container: '.djangocms-maps-container'
-    },
+    container: '.djangocms-maps-container',
+    options: {},
 
     /**
      * Initializes all Map instances.
      *
      * @method init
-     * @private
      * @param {Object} opts overwrite default options
      */
-    init: function init(opts) {
-        var that = this;
-        var options = $.extend(true, {}, this.options, opts);
-
+    init: function () {
         // loop through every instance
-        var containers = $(options.container);
-        containers.each(function (index, container) {
-            that._loadMap($(container));
+        var _this = this;
+        $(this.container).each(function (index, container) {
+            _this.initializeMap($(container));
         });
     },
 
     /**
      * Loads a single Map instance provided by ``init``.
      *
-     * @method _loadMap
-     * @private
+     * @method initializeMap
      * @param {jQuery} instance jQuery element used for initialization
      */
-    _loadMap: function _loadMap(instance) {
-        var that = this;
-        var container = instance;
-        var data = container.data();
-        var options = {
-            credentials: data.api_key,
-            navigationBarMode: Microsoft.Maps.NavigationBarMode.compact,
-            showLocateMeButton: false,
-            zoom: data.zoom,
-            disableScrollWheelZoom: !data.scrollwheel,
-            disableZooming: !data.double_click_zoom && !data.scrollwheel,
-            disablePanning: !data.draggable,
-            showZoomButtons: data.zoom_control,
-            showMapTypeSelector: data.layers_control,
-            showScalebar: data.scale_bar,
-            styles: data.style,
-        };
-        var map = new Microsoft.Maps.Map(container[0], options);
+    initializeMap: function ($container) {
+        var _this = this,
+            data = $container.data(),
+            options = {
+                credentials: data.api_key,
+                navigationBarMode: Microsoft.Maps.NavigationBarMode.compact,
+                showLocateMeButton: false,
+                zoom: data.zoom,
+                disableScrollWheelZoom: !data.scrollwheel,
+                disableZooming: !data.double_click_zoom && !data.scrollwheel,
+                disablePanning: !data.draggable,
+                showZoomButtons: data.zoom_control,
+                showMapTypeSelector: data.layers_control,
+                showScalebar: data.scale_bar,
+                styles: data.style
+            },
+            map = new Microsoft.Maps.Map($container[0], options);
 
-        // latitute or longitute have precedence over the address when provided
-        // inside the plugin form
-        data.lat = data.lat.toString();
-        data.lng = data.lng.toString();
-        if (data.lat.length && data.lng.length) {
-            var coords = {
-                lat: parseFloat(data.lat.replace(',', '.')),
-                lng: parseFloat(data.lng.replace(',', '.'))
-            };
-            var location = new Microsoft.Maps.Location(coords.lat, coords.lng);
+        if (data.latlng) {
+            var location = Microsoft.Maps.Location.parseLatLong(data.latlng);
+            this.displayMap(map, location);
             this.addMarker(map, location, data);
         } else {
             // load latlng from given address
@@ -86,11 +71,8 @@ djangocms.Maps = {
                     where: data.address,
                     callback: function (answer, userData) {
                         // use user-set zoom level for displaying result
-                        var options = Object.assign(map.getOptions(), {
-                            center: answer.results[0].location
-                        });
-                        map.setView(options);
-                        that.addMarker(map, answer.results[0].location, data);
+                        _this.displayMap(map, answer.results[0].location);
+                        _this.addMarker(map, answer.results[0].location, data);
                     }
                 };
                 searchManager.geocode(requestOptions);
@@ -99,14 +81,28 @@ djangocms.Maps = {
     },
 
     /**
+     * Display a single Map instance provided by ``initinitlizeMap``.
+     *
+     * @method displayMap
+     * @param {Microsoft.Maps.Map} map instance
+     * @param {Microsoft.Maps.Location} location instance
+     */
+    displayMap: function (map, location) {
+        var options = map.getOptions();
+        options.center = location;
+        map.setView(options);
+    },
+
+    /**
      * Adds a marker to a Map instance.
      *
      * @method addMarker
-     * @param {jQuery} map ``Microsoft.Maps.Map`` instance
-     * @param {jQuery} location ``Microsoft.Maps.Location`` instance
-     * @param {jQuery} data the data objects from a Map instance
+     * @param {Microsoft.Maps.Map} map instance
+     * @param {Microsoft.Maps.Location} location instance
+     * @param {Object} data the data objects from a Map instance
      */
-    addMarker: function addMarker(map, location, data) {
+
+    addMarker: function (map, location, data) {
         var pushpin = new Microsoft.Maps.Pushpin(location, null);
 
         if (data.show_infowindow) {
@@ -120,10 +116,11 @@ djangocms.Maps = {
                 title: data.title,
                 description: windowContent
             });
+
             infobox.setMap(map);
 
             Microsoft.Maps.Events.addHandler(pushpin, 'click', function () {
-                infobox.setOptions({ visible: true });
+                infobox.setOptions({visible: true});
             });
         }
 
